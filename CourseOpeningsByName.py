@@ -1,0 +1,1 @@
+# Work in progress that will accept a course subject and course name and list the open sections if any

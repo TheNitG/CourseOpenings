@@ -13,6 +13,8 @@ def is_course_open(course):
     options = webdriver.ChromeOptions()
     # Path to the chrome executable (change if needed to your chrome.exe path)
     options.binary_location = r"\Program Files\Google\Chrome\Application\chrome.exe"
+    # Make it so browser runs in background
+    options.add_argument('headless')
     # Path to the chromedriver included in this repository
     chrome_driver_binary = "./chromedriver"
     # Create the driver with the necessary configurations
