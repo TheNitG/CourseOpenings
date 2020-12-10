@@ -63,7 +63,7 @@ def is_course_open(course):
     # Determine if the course is open
     is_open = 'NO SECTIONS FOUND FOR THIS INQUIRY' not in driver.page_source
     # Close the browser
-    driver.close()
+    driver.quit()
     # Return True if open, else False
     return is_open
 
@@ -112,6 +112,7 @@ entry.pack()
 # Create button to submit search
 submit = tk.Button(text='Search', command=show_course_status)
 submit.pack()
+# Create a status label that will change to OPEN or CLOSED based on whether a course is open or closed
 tk.Label(text='Status:').pack()
 status = tk.Label(text='No course')
 status.pack()
