@@ -1,9 +1,13 @@
 # Import necessary packages
+# Time package used for sleep function
+from time import sleep
+# Web browser packages
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-import requests
-from bs4 import BeautifulSoup
+# Windows toast notification package
+from win10toast import ToastNotifier
+# GUI package
 import tkinter as tk
 
 
@@ -47,10 +51,35 @@ def is_course_open(course):
 
 # Method to display the course status
 def show_course_status():
+    # Get the CRN from the text box
+    crn = entry.get()
     # Get the boolean value for if the course is open or not
-    status_value = is_course_open(entry.get())
+    status_value = is_course_open(crn)
     # Display OPEN if open, else display CLOSED
     status['text'] = 'OPEN' if status_value else 'CLOSED'
+    # Update the window with the text
+    window.update()
+    # Attempts variable used to keep track of how many times tried (to show it is still running and retrying)
+    attempt = 1
+    # While the course is closed, keep retrying
+    while not status_value:
+        # Wait 60 seconds between each check (or whatever amount of time you want it to be in seconds)
+        sleep(60)
+        # Increment the number of attempts
+        attempt += 1
+        # Checks if the course is open now
+        status_value = is_course_open(crn)
+        # Updates the status text to the current status with the number of attempts and OPEN or CLOSED
+        status['text'] = 'Attempt Number ' + str(attempt) + '\nCLOSED'
+        # Update the window with the text
+        window.update()
+    # If the code gets this far, the course is open, so the status text should be updated to OPEN
+    status['text'] = 'OPEN'
+    # Update the window with the text
+    window.update()
+    # Display Windows toast notification for 60 seconds (or whatever amount of time you want it to be in seconds)
+    # when the course is open
+    ToastNotifier().show_toast("Course Opening!", "Course CRN: " + "test" + " is now open!", duration=60)
 
 
 # Create the window
