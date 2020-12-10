@@ -3,6 +3,7 @@
 from time import sleep
 # Web browser packages
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 # Windows toast notification package
@@ -15,14 +16,32 @@ import tkinter as tk
 def is_course_open(course):
     # Define the browser type and configure options to work
     options = webdriver.ChromeOptions()
-    # Path to the chrome executable (change if needed to your chrome.exe path)
-    options.binary_location = r"\Program Files\Google\Chrome\Application\chrome.exe"
     # Make it so browser runs in background
     options.add_argument('headless')
     # Path to the chromedriver included in this repository
     chrome_driver_binary = "./chromedriver"
-    # Create the driver with the necessary configurations
-    driver = webdriver.Chrome(chrome_driver_binary, options=options)
+    # Create the driver object which will be None until the try-except is executed
+    driver = None
+    try:
+        # Path to the chrome executable (change if needed to your chrome.exe path)
+        options.binary_location = r"\Program Files\Google\Chrome\Application\chrome.exe"
+        # Attempt to create the driver with the necessary configurations
+        driver = webdriver.Chrome(chrome_driver_binary, options=options)
+    except WebDriverException:
+        try:
+            # Try another common path
+            options.binary_location = r"\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+            # Attempt to create the driver with the necessary configurations
+            driver = webdriver.Chrome(chrome_driver_binary, options=options)
+        except WebDriverException:
+            try:
+                # Try another common path
+                options.binary_location = r"\Users\%UserName%\AppData\Local\Google\Chrome\Application\chrome.exe"
+                # Attempt to create the driver with the necessary configurations
+                driver = webdriver.Chrome(chrome_driver_binary, options=options)
+            except WebDriverException:
+                # Sets the status to what to do if the file isn't found
+                status['text'] = 'Please go into CourseOpenings.py and enter the location of your chrome.exe file'
     # Declare the URL of the Timetable
     url = 'https://apps.es.vt.edu/ssb/HZSKVTSC.P_DispRequest'
     # Get the page
@@ -75,15 +94,16 @@ def show_course_status():
         window.update()
     # If the code gets this far, the course is open, so the status text should be updated to OPEN
     status['text'] = 'OPEN'
-    # Update the window with the text
-    window.update()
     # Display Windows toast notification for 60 seconds (or whatever amount of time you want it to be in seconds)
-    # when the course is open
-    ToastNotifier().show_toast("Course Opening!", "Course CRN: " + "test" + " is now open!", duration=60)
+    # when the course is open (DISCLAIMER: changing the time changes the amount of time it takes before the next
+    # notification to pop up, if it hasn't been the set duration amount of time, a new notification won't pop up)
+    notification.show_toast("Course Opening!", "Course CRN: " + crn + " is now open!", duration=5, threaded=True)
 
 
 # Create the window
 window = tk.Tk()
+# Makes a new Windows toast notification object
+notification = ToastNotifier()
 # Add a label that says Product
 tk.Label(text='CRN:').pack()
 # Add a text box to type your search keyword(s)
