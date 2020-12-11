@@ -34,14 +34,12 @@ def is_course_open(crn, driver):
     course_number.send_keys(Keys.ENTER)
     # Determine if the course is open
     is_open = 'NO SECTIONS FOUND FOR THIS INQUIRY' not in driver.page_source
-    # Close the web-driver
-    driver.close()
     # Return True if open, else False
     return is_open
 
 
 # Method to display the course status
-def show_course_status():
+def show_course_status(current_status):
     # Get the CRN from the entry box
     crn = entry.get()
     # Make the web-driver
@@ -51,7 +49,7 @@ def show_course_status():
     # Get the boolean value for if the course is open or not
     status_value = is_course_open(crn, driver)
     # Display OPEN if open, else display CLOSED
-    status['text'] = crn + ' OPEN' if status_value else ' CLOSED'
+    current_status['text'] = crn + ' OPEN' if status_value else ' CLOSED'
     # Update the window with the text
     window.update()
     # Attempts variable used to keep track of how many times tried (to show it is still running and retrying)
@@ -65,11 +63,11 @@ def show_course_status():
         # Checks if the course is open now
         status_value = is_course_open(crn, driver)
         # Updates the status text to the current status with the number of attempts and OPEN or CLOSED
-        status['text'] = crn + ' Attempt Number ' + str(attempt) + '\nCLOSED'
+        current_status['text'] = crn + ' Attempt Number ' + str(attempt) + '\nCLOSED'
         # Update the window with the text
         window.update()
     # If the code gets this far, the course is open, so the status text should be updated to OPEN
-    status['text'] = crn + ' OPEN'
+    current_status['text'] = crn + ' OPEN'
     # Update the window with the text
     window.update()
     # Quit the web-driver
@@ -113,13 +111,37 @@ def make_driver():
                 # Return if successful
                 return driver_attempt
             except WebDriverException:
-                # Sets the status to what to do if the file isn't found
-                status['text'] = 'Please go into CourseOpenings.py and enter the location of your chrome.exe file'
+                # Create a status label that says what to do if the file isn't found
+                status = tk.Label(text='Please go into CourseOpenings.py and enter location of your chrome.exe file')
+                status.pack()
+                # Throw a WebDriverException with the same text as the label
                 raise WebDriverException('Please go into CourseOpenings.py and enter the path of your chrome.exe file')
+
+
+# Run the show_course_status method as a thread
+def thread_course_status():
+    # Create a status label that will change to OPEN or CLOSED based on whether a course is open or closed
+    tk.Label(text='Status:').pack()
+    # Indicate that the program is searching
+    current_status = tk.Label(text='Searching...')
+    current_status.pack()
+    # Add the status to the list
+    all_status.append(current_status)
+    # Create the thread
+    current_thread = Thread(target=show_course_status, args=(current_status,))
+    # Make thread close when program closes
+    current_thread.daemon = True
+    # Start the thread
+    current_thread.start()
 
 
 # Method that properly closes the webdriver, window, and the program
 def close_all():
+    # Creates a status label that gives a disclaimer that the program will hang while threads are closing.
+    status = tk.Label(text='Application may hang for\na small amount of time\nwhile all threads are closing.')
+    status.pack()
+    # Update the window with the text
+    window.update()
     # Quit all web-drivers
     for driver in drivers:
         driver.quit()
@@ -127,16 +149,6 @@ def close_all():
     window.destroy()
     # Exit the program
     exit(0)
-
-
-# Run the show_course_status method as a thread
-def thread_course_status():
-    # Create the thread
-    current_thread = Thread(target=show_course_status)
-    # Make thread close when program closes
-    current_thread.daemon = True
-    # Start the thread
-    current_thread.start()
 
 
 # Create a list to store all web-drivers
@@ -157,9 +169,7 @@ entry.pack()
 # Create button to submit search
 submit = tk.Button(text='Search', command=thread_course_status)
 submit.pack()
-# Create a status label that will change to OPEN or CLOSED based on whether a course is open or closed
-tk.Label(text='Status:').pack()
-status = tk.Label(text='No course')
-status.pack()
+# Make list to store the status labels
+all_status = []
 # Run the window
 window.mainloop()
