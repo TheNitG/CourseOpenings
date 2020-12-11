@@ -61,22 +61,26 @@ def show_course_status(current_status):
         status_value = is_course_open(crn, driver)
         # Check if the course actually exists
         if status_value or is_valid_course(driver):
-            # Display OPEN if open, else display CLOSED
-            current_status['text'] = crn + (' OPEN' if status_value else ' CLOSED, Checking in ' + str(interval) + 's')
-            # Update the window with the text
-            window.update()
+            # Display OPEN if open
+            if status_value:
+                current_status['text'] = f'{crn} OPEN'
+                # Update the window with the text
+                window.update()
             # Attempts variable used to keep track of how many times tried (to show it is still running and retrying)
             attempt = 1
             # While the course is closed, keep retrying
             while not status_value:
-                # Wait the amount of time indicated in the interval variable each check
-                sleep(interval)
+                # Updates the status text to the current status with the number of attempts and OPEN or CLOSED
+                for x in range(interval):
+                    current_status['text'] = f'{crn} Attempt {attempt}: CLOSED, Retrying in {interval - x}s'
+                    # Update the window with the text
+                    window.update()
+                    # To make it wait interval amount of seconds
+                    sleep(1)
                 # Increment the number of attempts
                 attempt += 1
                 # Checks if the course is open now
                 status_value = is_course_open(crn, driver)
-                # Updates the status text to the current status with the number of attempts and OPEN or CLOSED
-                current_status['text'] = f'{crn} Attempt {attempt}: CLOSED, Retrying in {interval}s'
                 # Update the window with the text
                 window.update()
             # If the code gets this far, the course is open, so the status text should be updated to OPEN
