@@ -32,50 +32,70 @@ def is_course_open(crn, driver):
     select_open.select_by_visible_text('ONLY OPEN Sections')
     # Emulate the enter keypress to submit the form
     course_number.send_keys(Keys.ENTER)
-    # Determine if the course is open
-    is_open = 'NO SECTIONS FOUND FOR THIS INQUIRY' not in driver.page_source
-    # Return True if open, else False
-    return is_open
+    # Determine if the course is open and return True if so, else return False
+    return 'NO SECTIONS FOUND FOR THIS INQUIRY' not in driver.page_source
 
 
-# Method to display the course status
+def is_valid_course(driver):
+    # Find the CRN element to edit
+    course_number = driver.find_element_by_name('crn')
+    select_open = Select(driver.find_element_by_name('open_only'))
+    # Select the only open sections option
+    select_open.select_by_visible_text('ALL Sections (FULL and OPEN)')
+    # Emulate the enter keypress to submit the form
+    course_number.send_keys(Keys.ENTER)
+    # Determine if the course exists and return True if so, else return False
+    return 'NO SECTIONS FOUND FOR THIS INQUIRY' not in driver.page_source
+
+
+# Method to keep checking if a class is open
 def show_course_status(current_status):
     # Get the CRN from the entry box
     crn = entry.get()
-    # Make the web-driver
-    driver = make_driver()
-    # Add the web-driver to the list of web-drivers
-    drivers.append(driver)
-    # Get the boolean value for if the course is open or not
-    status_value = is_course_open(crn, driver)
-    # Display OPEN if open, else display CLOSED
-    current_status['text'] = crn + (' OPEN' if status_value else ' CLOSED, Checking in ' + str(interval) + 's')
-    # Update the window with the text
-    window.update()
-    # Attempts variable used to keep track of how many times tried (to show it is still running and retrying)
-    attempt = 1
-    # While the course is closed, keep retrying
-    while not status_value:
-        # Wait the amount of time indicated in the interval variable each check
-        sleep(interval)
-        # Increment the number of attempts
-        attempt += 1
-        # Checks if the course is open now
+    if len(crn) == 5:
+        # Make the web-driver
+        driver = make_driver()
+        # Add the web-driver to the list of web-drivers
+        drivers.append(driver)
+        # Get the boolean value for if the course is open or not
         status_value = is_course_open(crn, driver)
-        # Updates the status text to the current status with the number of attempts and OPEN or CLOSED
-        current_status['text'] = crn + ' Attempt ' + str(attempt) + ': CLOSED, Checking in ' + str(interval) + 's'
-        # Update the window with the text
-        window.update()
-    # If the code gets this far, the course is open, so the status text should be updated to OPEN
-    current_status['text'] = crn + ' OPEN'
-    # Update the window with the text
-    window.update()
-    # Quit the web-driver
-    driver.quit()
-    # Display Windows toast notification for 60 seconds (or whatever amount of time you want it to be in seconds)
-    # when the course is open (DISCLAIMER: changing the time changes the amount of time it takes before the next
-    # notification to pop up, if it hasn't been the set duration amount of time, a new notification won't pop up)
-    notification.show_toast("Course Opening!", "Course CRN: " + crn + " is now open!", duration=5, threaded=True)
+        # Check if the course actually exists
+        if status_value or is_valid_course(driver):
+            # Display OPEN if open, else display CLOSED
+            current_status['text'] = crn + (' OPEN' if status_value else ' CLOSED, Checking in ' + str(interval) + 's')
+            # Update the window with the text
+            window.update()
+            # Attempts variable used to keep track of how many times tried (to show it is still running and retrying)
+            attempt = 1
+            # While the course is closed, keep retrying
+            while not status_value:
+                # Wait the amount of time indicated in the interval variable each check
+                sleep(interval)
+                # Increment the number of attempts
+                attempt += 1
+                # Checks if the course is open now
+                status_value = is_course_open(crn, driver)
+                # Updates the status text to the current status with the number of attempts and OPEN or CLOSED
+                current_status['text'] = f'{crn} Attempt {attempt}: CLOSED, Retrying in {interval}s'
+                # Update the window with the text
+                window.update()
+            # If the code gets this far, the course is open, so the status text should be updated to OPEN
+            current_status['text'] = crn + ' OPEN'
+            # Update the window with the text
+            window.update()
+            # Display Windows toast notification for 60 seconds (or whatever amount of time you want it to be in
+            # seconds) when the course is open (DISCLAIMER: changing the time changes the amount of time it takes
+            # before the next notification to pop up, if it hasn't been the set duration amount of time,
+            # a new notification won't pop up)
+            notification.show_toast("Course Opening!", "Course CRN: " + crn + " is now open!", duration=5,
+                                    threaded=True)
+            # Quit the web-driver
+            driver.quit()
+            return
+        # Quit the web-driver
+        driver.quit()
+    # If the program reaches this point, the CRN isn't valid
+    current_status['text'] = crn + ' is not a valid CRN'
 
 
 # Make the driver by attempting to use different chrome.exe paths and throw a WebDriverException if unsuccessful
@@ -120,7 +140,7 @@ def make_driver():
 
 # Run the show_course_status method as a thread
 def thread_course_status():
-    # Create a status label that will change to OPEN or CLOSED based on whether a course is open or closed
+    # Create a label that says 'Status:'
     tk.Label(text='Status:').pack()
     # Indicate that the program is searching
     current_status = tk.Label(text='Searching...')
