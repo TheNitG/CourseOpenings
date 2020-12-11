@@ -89,10 +89,12 @@ def show_course_status(current_status):
             # a new notification won't pop up)
             notification.show_toast("Course Opening!", "Course CRN: " + crn + " is now open!", duration=5,
                                     threaded=True)
-            # Quit the web-driver
+            # Close and quit the web-driver
+            driver.close()
             driver.quit()
             return
-        # Quit the web-driver
+        # Close and quit the web-driver
+        driver.close()
         driver.quit()
     # If the program reaches this point, the CRN isn't valid
     current_status['text'] = crn + ' is not a valid CRN'
@@ -162,9 +164,13 @@ def close_all():
     status.pack()
     # Update the window with the text
     window.update()
-    # Quit all web-drivers
+    # Close and quit all web-drivers
     for driver in drivers:
-        driver.quit()
+        try:
+            driver.close()
+            driver.quit()
+        except:
+            driver.quit()
     # Quit the window
     window.destroy()
     # Exit the program
