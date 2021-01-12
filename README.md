@@ -20,3 +20,5 @@ To use the application, you can run the script called RunCourseOpenings.bat by d
 ```
 $ python CourseOpenings.py
 ```
+# Customizing the Application
+If you feel inclined, you can edit the CourseOpenings.py program and change the "interval" variable to whatever amount of time (in seconds) you want the application rechecking for course availability. You can also change the "Spring 2021" string to whichever term you would like in case the application is not up to date. Please feel free to contribute to making the application better.
